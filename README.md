@@ -125,6 +125,8 @@ Access the portal at http://localhost:5000.
 
 
 
+
+
 medvault-cloud/
 ├── app.py                  # Main Flask Application Entry Point
 ├── config.py               # Security & AWS Configuration
@@ -144,6 +146,8 @@ medvault-cloud/
 
 
 <h2 align="center" style="font-size: 3em;">🤖 AI Integration</h2>
+
+
 
 The system uses modules/ai_chat.py to provide persona-based responses:
 

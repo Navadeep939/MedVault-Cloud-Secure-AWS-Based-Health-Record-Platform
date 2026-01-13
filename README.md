@@ -83,8 +83,10 @@ tabase: PostgreSQL (AWS RDS)
 <h3 align="center" style="font-size: 2em;">Installation</h3>
 
 Clone the Repository
-git clone [https://github.com/yourusername/medvault-cloud.git](https://github.com/navadeep939/medvault-cloud.git)
-cd medvault-cloud
+git clone [Navadeep939/MedVault-Cloud-Secure-AWS-Based-Health-Record-Platform: MedVault Cloud is a secure AWS-based Personal Health Record platform that enables encrypted storage and controlled sharing of healthcare data. Built using Python, EC2, S3 with KMS encryption, IAM, VPC, and Terraform, it enforces fine-grained access control using RBAC and ABE principles.
+https://github.com/Navadeep939/MedVault-Cloud-Secure-AWS-Based-Health-Record-Platform
+
+
 
 
 Set Up a Virtual Environment (Recommended)

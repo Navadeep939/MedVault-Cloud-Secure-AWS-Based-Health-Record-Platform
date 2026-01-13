@@ -1,8 +1,8 @@
-🛡️ MedVault Cloud - Secure PHR Platform
+#🛡️ MedVault Cloud - Secure PHR Platform
 
 MedVault Cloud is a secure, HIPAA-compliant Personal Health Record (PHR) system architecture designed for the AWS Cloud. It demonstrates a Zero-Trust security model, utilizing Infrastructure as Code (Terraform) to provision a 3-tier isolated network, and integrates Generative AI for health insights and architectural analysis.
 
-🏗️ System Architecture
+#🏗️ System Architecture
 
 This project implements a standard 3-Tier Web Architecture optimized for security:
 
@@ -24,7 +24,7 @@ IAM Least Privilege: EC2 instances use restricted IAM Roles to access S3.
 
 WAF Integration: Simulated protection against SQL Injection and XSS.
 
-✨ Key Features
+#✨ Key Features
 
 👨‍💻 Admin & Architect Dashboard
 
@@ -36,7 +36,7 @@ Deployment Lab: Simulate Terraform init/apply workflows.
 
 Chaos Engineering: Trigger simulated EC2 failures to test Auto Scaling resilience.
 
-👩‍⚕️ Patient Health Portal
+#👩‍⚕️ Patient Health Portal
 
 Secure Access: Role-based authentication (simulated AWS Cognito).
 
@@ -46,7 +46,7 @@ Encrypted Vault: Upload and store medical records (PDF/Imaging) securely to S3.
 
 MedVault AI Assistant: Context-aware chatbot for interpreting medical data.
 
-🛠️ Technology Stack
+$🛠️ Technology Stack
 
 Backend: Python (Flask), Boto3 (AWS SDK)
 
@@ -60,7 +60,7 @@ Database: PostgreSQL (AWS RDS)
 
 Storage: AWS S3 + KMS
 
-🚀 Getting Started
+#🚀 Getting Started
 
 Prerequisites
 

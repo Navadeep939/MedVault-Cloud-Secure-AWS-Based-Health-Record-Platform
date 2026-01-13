@@ -47,7 +47,8 @@ Deployment Lab: Simulate Terraform init/apply workflows.
 
 Chaos Engineering: Trigger simulated EC2 failures to test Auto Scaling resilience.
 
-<img width="1687" height="982" alt="Screenshot 2026-01-13 at 8 00 50 AM" src="https://github.com/user-attachments/assets/92e28802-96a3-4ed0-95df-eeadbc272aaf" />
+<img width="1710" height="988" alt="Screenshot 2026-01-13 at 7 57 37 AM" src="https://github.com/user-attachments/assets/110d9609-fa27-4fb2-86e3-0accb2b789d5" />
+
 
 
 <h3 align="center" style="font-size: 2em;">👩‍⚕️ Patient Health Portal</h3>
@@ -60,7 +61,7 @@ Encrypted Vault: Upload and store medical records (PDF/Imaging) securely to S3.
 
 MedVault AI Assistant: Context-aware chatbot for interpreting medical data.
 
-<img width="1710" height="987" alt="Screenshot 2026-01-13 at 8 02 19 AM" src="https://github.com/user-attachments/assets/f9a555b8-fca6-408f-8d4f-6e29d5b939c6" />
+<img width="1687" height="982" alt="Screenshot 2026-01-13 at 8 00 50 AM" src="https://github.com/user-attachments/assets/d86b8422-8dd9-4582-a0d3-9c26aa6531bc" />
 
 
 <h2 align="center" style="font-size: 3em;">🛠️ Technology Stack</h2>

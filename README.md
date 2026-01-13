@@ -77,10 +77,6 @@ AI Engine: Medvault API (via MedVault AI module)
 Database: PostgreSQL (AWS RDS)
 
 Storage: AWS S3 + KMS
-<img width="1710" height="987" alt="Screenshot 2026-01-13 at 8 02 19 AM" src="https://github.com/user-attachments/assets/eccc1838-a280-425b-b094-7167acf70988" />
-
-<img width=<img width="1704" height="986" alt="Screenshot 2026-01-13 at 8 02 44 AM" src="https://github.com/user-attachments/assets/fd34f1b3-7456-43a5-b926-72df2db2941a" />
-"1705" height="982" alt="Screenshot 2026-01-13 at 8 03 17 AM" src="https://github.com/user-attachments/assets/0008dc86-8501-462f-95de-153b4e8fb568" />
-
-          
-
+<img width="1710" height="987" alt="Screenshot 2026-01-13 at 8 02 19 AM" src="https://github.com/user-attachments/assets/deb01f63-7420-4fc8-8023-25bdb2c3f50b" />
+<img width="1704" height="986" alt="Screenshot 2026-01-13 at 8 02 44 AM" src="https://github.com/user-attachments/assets<img width="1705" height="982" alt="Screenshot 2026-01-13 at 8 03 17 AM" src="https://github.com/user-attachments/assets/486db700-3031-4ffa-b9e0-13442c5f4fc1" />
+/a8c4e18a-96c1-4784-a60d-40674e912180" />

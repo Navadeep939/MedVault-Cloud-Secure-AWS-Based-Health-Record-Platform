@@ -74,9 +74,9 @@ Frontend: HTML5, Tailwind CSS, JavaScript (Vanilla)
 
 AI Engine: Medvault API (via MedVault AI module)
 
-Database: PostgreSQL (AWS RDS)
+tabase: PostgreSQL (AWS RDS)
+<img width="1710" height="987" alt="Screenshot 2026-01-13 at 8 02 19 AM" src="https://github.com/user-attachments/assets/21b4ebaa-54b7-4f5f-9d4f-0c12e30ab352" />
+<img width="1704" height="986" alt="Screenshot 2026-01-13 at 8 02 44 AM" src="https://github.com/user-attachments/assets/969a17cf-3e1d-4399-a5da-509da945f3b5" />
 
-Storage: AWS S3 + KMS
-<img width="1710" height="987" alt="Screenshot 2026-01-13 at 8 02 19 AM" src="https://github.com/user-attachments/assets/deb01f63-7420-4fc8-8023-25bdb2c3f50b" />
-<img width="1704" height="986" alt="Screenshot 2026-01-13 at 8 02 44 AM" src="https://github.com/user-attachments/assets<img width="1705" height="982" alt="Screenshot 2026-01-13 at 8 03 17 AM" src="https://github.com/user-attachments/assets/486db700-3031-4ffa-b9e0-13442c5f4fc1" />
-/a8c4e18a-96c1-4784-a60d-40674e912180" />
+<img width="1705" height="982" alt="Screenshot 2026-01-13 at 8 03 17 AM" src="https://github.com/user-attachments/assets/6f846121-3244-4c92-b847-2d40536107e0" />
+

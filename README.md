@@ -65,7 +65,7 @@ Infrastructure: HashiCorp Terraform
 
 Frontend: HTML5, Tailwind CSS, JavaScript (Vanilla)
 
-AI Engine: Google Gemini API (via MedVault AI module)
+AI Engine: Medvault API (via MedVault AI module)
 
 Database: PostgreSQL (AWS RDS)
 

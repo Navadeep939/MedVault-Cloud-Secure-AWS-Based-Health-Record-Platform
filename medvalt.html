@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedVault Cloud - Secure AWS PHR Architecture</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Marked library for Markdown rendering in chat -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+/* Custom Scrollbar for Terminal */
+.terminal-scroll::-webkit-scrollbar {
+    width: 8px;
+}
+.terminal-scroll::-webkit-scrollbar-track {
+    background: #1f2937;
+}
+.terminal-scroll::-webkit-scrollbar-thumb {
+    background: #4b5563;
+    border-radius: 4px;
+}
+
+/* Architecture Component Hover Effects */
+.arch-component {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+.arch-component:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+.arch-active {
+    ring-width: 2px;
+    ring-color: #0d9488; /* teal-600 */
+    border-color: #0d9488;
+}
+
+/* Chart Container Rules */
+.chart-container {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    height: 300px;
+    margin-left: auto;
+    margin-right: auto;
+}
+@media (min-width: 768px) {
+    .chart-container {
+        height: 350px;
+    }
+}
+
+/* Chat Widget Styles */
+.chat-widget {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.chat-message {
+    animation: slideIn 0.3s ease-out;
+}
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.typing-dot {
+    animation: typing 1.4s infinite ease-in-out both;
+}
+.typing-dot:nth-child(1) { animation-delay: -0.32s; }
+.typing-dot:nth-child(2) { animation-delay: -0.16s; }
+@keyframes typing {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1); }
+}
+
+/* Markdown Styles within Chat */
+.prose-sm p { margin-bottom: 0.5em; }
+.prose-sm ul { list-style-type: disc; margin-left: 1.2em; }
+.prose-sm code { background-color: rgba(0,0,0,0.1); padding: 0.1em 0.3em; border-radius: 3px; font-family: monospace; font-size: 0.9em; }
+.prose-sm pre { background-color: #f3f4f6; padding: 0.5em; border-radius: 4px; overflow-x: auto; }
+
+/* VIEW TRANSITIONS (The "Real" Transform Model) */
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation-duration: 0.5s;
+}
+
+/* Animation Utilities */
+.animate-blob {
+    animation: blob 7s infinite;
+}
+.animation-delay-2000 {
+    animation-delay: 2s;
+}
+@keyframes blob {
+    0% { transform: translate(0px, 0px) scale(1); }
+    33% { transform: translate(30px, -50px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.9); }
+    100% { transform: translate(0px, 0px) scale(1); }
+}
+.animate-fade-in-up {
+    animation: fadeInUp 0.5s ease-out;
+}
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Threat Feed Animation */
+.threat-entry { animation: fadeInRight 0.3s ease-out; }
+@keyframes fadeInRight {
+    from { opacity: 0; transform: translateX(10px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+</style>
+</head>
+<body class="bg-stone-50 text-stone-800 font-sans leading-relaxed">
+
+<!-- AUTHENTICATION VIEW (LOGIN) -->
+<section id="auth-view" class="min-h-screen flex items-center justify-center px-4 relative overflow-hidden" style="view-transition-name: main-content;">
+    <!-- Background Decoration -->
+    <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
+        <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-teal-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+        <div class="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+    </div>
+
+    <div class="max-w-md w-full bg-white rounded-2xl shadow-xl border border-stone-200 overflow-hidden transform transition-all duration-500">
+        <div class="bg-teal-700 p-8 text-center relative">
+            <div class="absolute top-4 right-4">
+                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-teal-600 text-teal-100 border border-teal-500">
+                    <span class="w-1.5 h-1.5 rounded-full bg-teal-300 mr-1.5 animate-pulse"></span>
+                    System Online
+                </span>
+            </div>
+            <div class="text-5xl mb-4">🛡️</div>
+            <h1 class="text-2xl font-bold text-white tracking-tight">MedVault Cloud</h1>
+            <p class="text-teal-100 text-sm mt-1 opacity-90">Secure AWS Health Platform</p>
+        </div>
+
+        <!-- ROLE SELECTION TABS -->
+        <div class="flex border-b border-stone-200">
+            <button onclick="selectRole('admin')" id="role-tab-admin" class="w-1/2 py-4 text-sm font-bold text-teal-700 bg-teal-50 border-b-2 border-teal-600 transition-colors">
+                👨‍💻 Admin / Architect
+            </button>
+            <button onclick="selectRole('patient')" id="role-tab-patient" class="w-1/2 py-4 text-sm font-medium text-stone-500 hover:text-teal-600 hover:bg-stone-50 transition-colors">
+                👩‍⚕️ Patient View
+            </button>
+        </div>
+
+        <div class="p-8 space-y-6">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1">Email Address</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-stone-400">👤</span>
+                        <input type="email" id="auth-email" class="w-full pl-10 pr-4 py-2 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition" value="admin@hospital.org" readonly>
+                    </div>
+                    <p class="text-[10px] text-stone-400 mt-1 ml-1">*Credentials pre-filled for demo</p>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1">Password</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-stone-400">🔒</span>
+                        <input type="password" id="auth-password" class="w-full pl-10 pr-4 py-2 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition" value="password123">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between text-xs text-stone-500">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" class="rounded border-stone-300 text-teal-600 focus:ring-teal-500">
+                    Remember device
+                </label>
+                <a href="#" class="hover:text-teal-600 transition">Forgot credentials?</a>
+            </div>
+
+            <button onclick="handleLogin()" id="login-btn" class="w-full bg-teal-600 text-white py-3 rounded-lg font-bold hover:bg-teal-700 transform active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                <span>Secure Sign In</span>
+                <span id="login-spinner" class="hidden animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+            </button>
+
+            <div class="text-center">
+                <p class="text-[10px] text-stone-400 bg-stone-50 py-2 rounded border border-stone-100">
+                    🔒 Connection Encrypted via TLS 1.3 | AWS Cognito Federated Auth
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ADMIN DASHBOARD VIEW (ARCHITECT & DEVOPS) -->
+<div id="admin-view" class="hidden" style="view-transition-name: main-content;">
+    <!-- Navigation / Header -->
+    <nav class="w-full bg-white border-b border-stone-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-2xl mr-2">🛡️</span>
+                    <div>
+                        <span class="font-bold text-xl tracking-tight text-stone-900 block leading-none">MedVault Cloud</span>
+                        <span class="text-[10px] text-teal-600 font-bold tracking-wide">ADMIN OPS CENTER</span>
+                    </div>
+                </div>
+                <!-- Desktop Nav -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <button onclick="scrollToSection('architecture')" class="text-stone-600 hover:text-teal-600 font-medium transition-colors text-sm">Architecture</button>
+                    <button onclick="scrollToSection('soc-panel')" class="text-stone-600 hover:text-teal-600 font-medium transition-colors text-sm">SOC Dashboard</button>
+                    <button onclick="scrollToSection('deployment')" class="text-stone-600 hover:text-teal-600 font-medium transition-colors text-sm">Deployment Lab</button>
+                </div>
+                <!-- User Profile -->
+                <div class="flex items-center gap-4">
+                    <div class="hidden sm:flex flex-col items-end">
+                        <span class="text-sm font-bold text-stone-800">Admin User</span>
+                        <span class="text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full border border-green-100">Authenticated</span>
+                    </div>
+                    <div class="h-8 w-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 border border-teal-200">
+                        👨‍💻
+                    </div>
+                    <button onclick="handleLogout()" class="text-stone-400 hover:text-red-500 transition-colors" title="Logout">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="bg-white">
+        <div class="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-4xl font-extrabold text-stone-900 sm:text-5xl sm:tracking-tight lg:text-6xl">
+                MedVault Cloud Platform
+                <span class="block text-teal-600">DevSecOps Dashboard</span>
+            </h1>
+            <p class="mt-5 max-w-xl mx-auto text-xl text-stone-500">
+                Control your HIPAA-compliant infrastructure. Monitor threats, simulate chaos, and manage deployment cycles.
+            </p>
+            <div class="mt-8 flex justify-center gap-4">
+                <div class="px-4 py-2 bg-stone-100 rounded-full text-sm font-semibold text-stone-700">🔒 AWS GuardDuty</div>
+                <div class="px-4 py-2 bg-stone-100 rounded-full text-sm font-semibold text-stone-700">🏗️ Terraform State</div>
+                <div class="px-4 py-2 bg-stone-100 rounded-full text-sm font-semibold text-stone-700">🛡️ WAF Active</div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-24">
+        <!-- SECTION 1: ARCHITECTURE MAP (2D Standard View) -->
+        <section id="architecture" class="scroll-mt-20">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold text-stone-900">Interactive Topology Map</h2>
+                <p class="mt-4 text-lg text-stone-600 max-w-3xl mx-auto">
+                    Explore the system topology by interacting with the components below. 
+                    This diagram represents the 3-tier architecture designed for network isolation and security.
+                    Click on any component (EC2, RDS, S3, etc.) to view its configuration code.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Architecture Diagram (Visual) -->
+                <div class="lg:col-span-2 bg-stone-100 p-6 rounded-xl border border-stone-200 relative">
+                    <div class="absolute top-4 left-4 text-xs font-bold text-stone-400 uppercase tracking-widest">AWS Cloud Region (us-east-1)</div>
+                    
+                    <!-- VPC Container -->
+                    <div class="mt-8 border-2 border-dashed border-stone-300 rounded-lg p-6 bg-white relative">
+                        <div class="absolute -top-3 left-4 bg-white px-2 text-sm font-bold text-stone-500">VPC (10.0.0.0/16)</div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Public Subnet -->
+                            <div class="border border-blue-100 bg-blue-50/50 rounded-lg p-4 relative">
+                                <div class="mb-4 flex justify-between items-center">
+                                    <span class="text-xs font-bold text-blue-600 uppercase">Public Subnet</span>
+                                    <span class="text-xs text-blue-400">10.0.1.0/24</span>
+                                </div>
+                                <!-- Internet Gateway (Logical connection) -->
+                                <div class="absolute -top-10 right-4 flex flex-col items-center">
+                                    <div class="h-6 w-0.5 bg-stone-300"></div>
+                                    <div class="text-2xl">🌐</div>
+                                    <div class="text-xs text-stone-500">IGW</div>
+                                </div>
+                                <!-- EC2 Component -->
+                                <div onclick="showDetails('ec2')" class="arch-component bg-white border border-stone-200 p-4 rounded shadow-sm hover:border-teal-500 group">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="p-2 bg-stone-100 rounded text-xl group-hover:bg-teal-50 transition-colors">💻</div>
+                                        <div>
+                                            <h4 class="font-bold text-stone-800">EC2 Instance</h4>
+                                            <p class="text-xs text-stone-500">Python Flask App</p>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 flex gap-1">
+                                        <span class="text-[10px] bg-stone-100 px-1 rounded">Port 5000</span>
+                                        <span class="text-[10px] bg-green-100 text-green-700 px-1 rounded">IAM Role</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Private Subnet -->
+                            <div class="border border-red-100 bg-red-50/50 rounded-lg p-4 relative">
+                                <div class="mb-4 flex justify-between items-center">
+                                    <span class="text-xs font-bold text-red-600 uppercase">Private Subnet</span>
+                                    <span class="text-xs text-red-400">10.0.2.0/24</span>
+                                </div>
+                                <!-- RDS Component -->
+                                <div onclick="showDetails('rds')" class="arch-component bg-white border border-stone-200 p-4 rounded shadow-sm hover:border-teal-500 group">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="p-2 bg-stone-100 rounded text-xl group-hover:bg-teal-50 transition-colors">🗄️</div>
+                                        <div>
+                                            <h4 class="font-bold text-stone-800">RDS Database</h4>
+                                            <p class="text-xs text-stone-500">PostgreSQL</p>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 flex gap-1">
+                                        <span class="text-[10px] bg-stone-100 px-1 rounded">Port 5432</span>
+                                        <span class="text-[10px] bg-stone-100 px-1 rounded">Private Only</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- S3 Component (Outside VPC for visualization logic, though accessed via endpoint/internet) -->
+                    <div class="mt-6 flex justify-center">
+                        <div onclick="showDetails('s3')" class="arch-component w-full md:w-2/3 bg-white border border-yellow-200 bg-yellow-50/30 p-4 rounded-lg shadow-sm hover:border-teal-500 group relative">
+                            <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-white px-2 text-xs font-bold text-stone-400 border border-stone-100 rounded">Encrypted Storage Layer</div>
+                            <div class="flex items-center justify-between px-4">
+                                <div class="flex items-center space-x-3">
+                                    <div class="p-2 bg-yellow-100 rounded text-xl">📦</div>
+                                    <div>
+                                        <h4 class="font-bold text-stone-800">S3 Bucket</h4>
+                                        <p class="text-xs text-stone-500">PHR Files</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center text-xs text-stone-500">
+                                    <span class="mr-2">🔑 KMS-SSE</span>
+                                    <span>🔒 Block Public</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Architecture Details Panel -->
+                <div class="lg:col-span-1 bg-white border border-stone-200 rounded-xl p-6 shadow-lg flex flex-col">
+                    <div class="mb-4 border-b border-stone-100 pb-2">
+                        <h3 class="text-lg font-bold text-teal-700 flex items-center">
+                            <span class="mr-2 text-xl">ℹ️</span> Component Details
+                        </h3>
+                    </div>
+                    <div id="detail-content" class="flex-grow">
+                        <div class="h-full flex flex-col justify-center items-center text-center text-stone-400">
+                            <span class="text-4xl mb-2">👆</span>
+                            <p>Click on an infrastructure component in the diagram to view its configuration.</p>
+                        </div>
+                    </div>
+                    <!-- Contextual Action Button (Dynamic) -->
+                    <div id="detail-action" class="mt-6 pt-4 border-t border-stone-100 hidden">
+                        <!-- This will be dynamically updated by JS -->
+                        <button id="view-tf-btn" class="w-full py-2 bg-stone-800 text-white rounded hover:bg-stone-700 transition">View Terraform Module</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: SECURITY OPERATIONS CENTER (NEW/INNOVATIVE) -->
+        <section id="soc-panel" class="scroll-mt-20">
+            <div class="bg-slate-900 text-white rounded-2xl shadow-2xl border border-slate-700 overflow-hidden">
+                <!-- SOC Header -->
+                <div class="bg-slate-950 p-6 border-b border-slate-800 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+                            <span class="relative flex h-3 w-3">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                            </span>
+                            Security Operations Center (SOC)
+                        </h2>
+                        <p class="text-slate-400 text-sm mt-1 font-mono">Live Threat Monitoring & FinOps</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="px-3 py-1 bg-slate-800 border border-slate-600 rounded text-xs text-green-400 font-mono">System: ONLINE</span>
+                        <span class="px-3 py-1 bg-slate-800 border border-slate-600 rounded text-xs text-yellow-400 font-mono">WAF: BLOCKING</span>
+                    </div>
+                </div>
+
+                <div class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Col 1: Live Threat Feed -->
+                    <div class="lg:col-span-2 space-y-4">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-bold text-slate-200 text-sm uppercase tracking-wider">Live Attack Feed (WAF Logs)</h3>
+                            <span class="text-xs text-slate-500">Real-time Ingestion</span>
+                        </div>
+                        <div class="bg-black rounded-lg border border-slate-700 h-64 overflow-hidden relative font-mono text-xs p-4 shadow-inner">
+                            <div class="absolute top-0 left-0 w-full h-8 bg-gradient-to-b from-black to-transparent pointer-events-none z-10"></div>
+                            <div class="absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t from-black to-transparent pointer-events-none z-10"></div>
+                            <div id="threat-feed" class="flex flex-col-reverse h-full overflow-y-auto space-y-2 space-y-reverse pr-2 scrollbar-hide">
+                                <!-- Populated by JS -->
+                                <div class="text-slate-600 text-center mt-10">Initializing Sensors...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Col 2: FinOps & Compliance -->
+                    <div class="space-y-6">
+                        <!-- Compliance Gauge -->
+                        <div class="bg-slate-800 rounded-xl p-5 border border-slate-700">
+                            <h3 class="text-xs font-bold text-slate-400 uppercase mb-4">HIPAA Compliance Score</h3>
+                            <div class="relative pt-2">
+                                <div class="flex justify-between items-end mb-2">
+                                    <span class="text-4xl font-bold text-green-400">100%</span>
+                                    <span class="text-xs text-green-400 bg-green-900/30 px-2 py-1 rounded">AUDIT PASS</span>
+                                </div>
+                                <div class="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
+                                    <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
+                                </div>
+                                <ul class="mt-4 space-y-2 text-xs text-slate-300">
+                                    <li class="flex items-center gap-2"><span class="text-green-400">✔</span> Encryption at Rest (KMS)</li>
+                                    <li class="flex items-center gap-2"><span class="text-green-400">✔</span> Private Subnet Isolation</li>
+                                    <li class="flex items-center gap-2"><span class="text-green-400">✔</span> IAM Least Privilege</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Cost Estimator (FinOps) -->
+                        <div class="bg-slate-800 rounded-xl p-5 border border-slate-700">
+                            <h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Daily Cloud Cost (Est.)</h3>
+                            <div class="flex justify-between items-center">
+                                <span class="text-2xl font-bold text-white" id="cloud-cost">$1.45</span>
+                                <span class="text-xs text-teal-400">+0.02% vs yesterday</span>
+                            </div>
+                            <div class="mt-4 space-y-2">
+                                <div class="flex justify-between text-xs text-slate-400">
+                                    <span>EC2 (t2.micro)</span>
+                                    <span>$0.28</span>
+                                </div>
+                                <div class="w-full bg-slate-700 h-1 rounded-full"><div class="bg-blue-500 w-1/4 h-1 rounded-full"></div></div>
+                                <div class="flex justify-between text-xs text-slate-400 mt-2">
+                                    <span>RDS (Postgres)</span>
+                                    <span>$0.85</span>
+                                </div>
+                                <div class="w-full bg-slate-700 h-1 rounded-full"><div class="bg-orange-500 w-3/4 h-1 rounded-full"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: DEPLOYMENT LAB & CHAOS ENGINEERING -->
+        <section id="deployment" class="scroll-mt-20">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold text-stone-900">Deployment & Chaos Lab</h2>
+                <p class="mt-4 text-lg text-stone-600 max-w-3xl mx-auto">
+                    Execute Infrastructure as Code (Terraform) and perform <strong>Chaos Engineering</strong> tests to verify system resilience.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Control Panel -->
+                <div class="lg:col-span-1 space-y-4">
+                    <!-- Terraform Controls -->
+                    <div class="bg-white p-6 rounded-xl border border-stone-200 shadow-sm">
+                        <h3 class="font-bold text-stone-800 mb-4">1. Infrastructure Deployment</h3>
+                        <div class="space-y-3">
+                            <button onclick="runSim('init')" class="w-full text-left px-4 py-3 rounded bg-stone-50 hover:bg-teal-50 border border-stone-200 hover:border-teal-300 transition group">
+                                <span class="font-mono text-xs text-teal-600 block mb-1">$ terraform init</span>
+                                <span class="text-sm text-stone-600 group-hover:text-stone-900">Initialize backend & plugins</span>
+                            </button>
+                            <button onclick="runSim('apply')" class="w-full text-left px-4 py-3 rounded bg-stone-50 hover:bg-teal-50 border border-stone-200 hover:border-teal-300 transition group">
+                                <span class="font-mono text-xs text-teal-600 block mb-1">$ terraform apply</span>
+                                <span class="text-sm text-stone-600 group-hover:text-stone-900">Deploy VPC, EC2, RDS, S3</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Chaos Controls (New) -->
+                    <div class="bg-white p-6 rounded-xl border border-red-100 shadow-sm relative overflow-hidden">
+                        <div class="absolute top-0 right-0 p-2 opacity-10 text-4xl">🔥</div>
+                        <h3 class="font-bold text-red-800 mb-4">2. Chaos Engineering</h3>
+                        <div class="space-y-3">
+                            <button onclick="triggerChaos('ec2-fail')" class="w-full text-left px-4 py-3 rounded bg-red-50 hover:bg-red-100 border border-red-200 hover:border-red-300 transition group">
+                                <span class="font-bold text-xs text-red-600 block mb-1">🔥 Simulate EC2 Failure</span>
+                                <span class="text-xs text-stone-600">Test Auto Scaling Recovery</span>
+                            </button>
+                            <button onclick="triggerChaos('sql-inject')" class="w-full text-left px-4 py-3 rounded bg-orange-50 hover:bg-orange-100 border border-orange-200 hover:border-orange-300 transition group">
+                                <span class="font-bold text-xs text-orange-600 block mb-1">🛡️ Simulate SQL Injection</span>
+                                <span class="text-xs text-stone-600">Test WAF Blocking Rule</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Terminal Output -->
+                <div class="lg:col-span-2">
+                    <div class="bg-stone-900 rounded-xl shadow-2xl overflow-hidden h-[500px] flex flex-col font-mono text-sm">
+                        <div class="bg-stone-800 px-4 py-2 flex items-center gap-2 border-b border-stone-700">
+                            <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                            <span class="ml-2 text-stone-400 text-xs">admin@bastion:~/secure-phr-aws</span>
+                        </div>
+                        <div id="terminal-content" class="p-4 text-stone-300 overflow-y-auto terminal-scroll flex-grow whitespace-pre-wrap">
+                            <span class="text-stone-500"># System ready. Authentication required to proceed...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-stone-900 text-stone-400 py-12 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p>&copy; 2024 MedVault Cloud. Built with Terraform & AWS.</p>
+        </div>
+    </footer>
+</div>
+<!-- END ADMIN DASHBOARD VIEW -->
+
+<!-- PATIENT HEALTH PORTAL (NEW ISOLATED VIEW) -->
+<div id="patient-view" class="hidden bg-stone-50 min-h-screen flex flex-col" style="view-transition-name: main-content;">
+    <!-- Patient Navigation -->
+    <nav class="bg-white border-b border-stone-200 shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="bg-teal-500 text-white p-2 rounded-lg">
+                        <span class="text-xl font-bold">✚</span>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-xl text-stone-800">MedVault Cloud | Patient</h1>
+                        <p class="text-xs text-stone-500">Secure Access (AES-256)</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="text-right hidden sm:block">
+                        <span class="block text-sm font-bold text-stone-800">Alice Freeman</span>
+                        <span class="text-xs text-teal-600">ID: PHR-8821</span>
+                    </div>
+                    <div class="h-9 w-9 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 text-lg border border-teal-200">👩‍⚕️</div>
+                    <button onclick="handleLogout()" class="text-stone-400 hover:text-red-500 transition-colors ml-2">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Patient Content -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- Patient Sidebar (Profile) -->
+            <div class="lg:col-span-1 space-y-6">
+                <div class="bg-white rounded-xl shadow-sm border border-stone-200 p-6">
+                    <div class="text-center mb-6">
+                        <div class="w-24 h-24 mx-auto rounded-full bg-stone-100 mb-4 flex items-center justify-center text-4xl shadow-inner">👩‍⚕️</div>
+                        <h2 class="text-xl font-bold text-stone-800">Alice Freeman</h2>
+                        <span class="inline-block bg-teal-50 text-teal-700 text-xs px-2 py-1 rounded-full border border-teal-100 mt-2">Active Member</span>
+                    </div>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between border-b border-stone-100 pb-2">
+                            <span class="text-stone-500">Date of Birth</span>
+                            <span class="font-medium text-stone-800">Jan 12, 1985</span>
+                        </div>
+                        <div class="flex justify-between border-b border-stone-100 pb-2">
+                            <span class="text-stone-500">Blood Type</span>
+                            <span class="font-medium text-stone-800">O+</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-stone-500">Primary Care</span>
+                            <span class="font-medium text-stone-800">Dr. Smith</span>
+                        </div>
+                    </div>
+                    <div class="mt-6 bg-stone-50 p-3 rounded-lg border border-stone-100 text-xs text-center text-stone-400">
+                        Source: AWS RDS (Private Subnet)
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Dashboard -->
+            <div class="lg:col-span-3 space-y-6">
+                <!-- Vitals Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-red-500 flex items-center justify-between hover:shadow-md transition">
+                        <div>
+                            <p class="text-xs text-stone-500 font-bold uppercase mb-1">Heart Rate</p>
+                            <p class="text-2xl font-bold text-stone-800" id="vitals-hr">72 <span class="text-sm font-normal text-stone-400">bpm</span></p>
+                        </div>
+                        <div class="text-red-100 text-3xl">❤️</div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-blue-500 flex items-center justify-between hover:shadow-md transition">
+                        <div>
+                            <p class="text-xs text-stone-500 font-bold uppercase mb-1">Blood Pressure</p>
+                            <p class="text-2xl font-bold text-stone-800" id="vitals-bp">118/78 <span class="text-sm font-normal text-stone-400">mmHg</span></p>
+                        </div>
+                        <div class="text-blue-100 text-3xl">🩺</div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-teal-500 flex items-center justify-between hover:shadow-md transition">
+                        <div>
+                            <p class="text-xs text-stone-500 font-bold uppercase mb-1">Oxygen (SpO2)</p>
+                            <p class="text-2xl font-bold text-stone-800">98% <span class="text-sm font-normal text-stone-400">Normal</span></p>
+                        </div>
+                        <div class="text-teal-100 text-3xl">💧</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Vitals Chart -->
+                    <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-stone-200">
+                        <h3 class="font-bold text-stone-800 mb-6 flex justify-between items-center">
+                            Vitals History
+                            <select class="text-xs border-stone-200 border rounded p-1 bg-stone-50 text-stone-600 outline-none">
+                                <option>Last 7 Days</option>
+                                <option>Last 30 Days</option>
+                            </select>
+                        </h3>
+                        <div class="chart-container" style="height: 250px;">
+                            <canvas id="patientVitalsChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Medical Files -->
+                    <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-sm border border-stone-200 flex flex-col">
+                        <h3 class="font-bold text-stone-800 mb-4 flex items-center justify-between">
+                            Records
+                            <span class="text-[10px] bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full border border-yellow-200">S3 Secured</span>
+                        </h3>
+                        <div class="flex-grow space-y-3" id="patient-file-list">
+                            <div class="flex items-center gap-3 p-3 rounded-lg border border-stone-100 hover:bg-stone-50 transition cursor-pointer group">
+                                <div class="bg-red-50 text-red-500 p-2 rounded group-hover:bg-red-100 transition">📄</div>
+                                <div class="flex-grow min-w-0">
+                                    <p class="text-sm font-medium text-stone-800 truncate">Lab_Results_CBC.pdf</p>
+                                    <p class="text-xs text-stone-400">2.4 MB • Today</p>
+                                </div>
+                                <div class="text-stone-300">🔒</div>
+                            </div>
+                            <div class="flex items-center gap-3 p-3 rounded-lg border border-stone-100 hover:bg-stone-50 transition cursor-pointer group">
+                                <div class="bg-blue-50 text-blue-500 p-2 rounded group-hover:bg-blue-100 transition">🖼️</div>
+                                <div class="flex-grow min-w-0">
+                                    <p class="text-sm font-medium text-stone-800 truncate">Chest_XRay_PA.png</p>
+                                    <p class="text-xs text-stone-400">15 MB • Jan 10</p>
+                                </div>
+                                <div class="text-stone-300">🔒</div>
+                            </div>
+                            <div class="flex items-center gap-3 p-3 rounded-lg border border-stone-100 hover:bg-stone-50 transition cursor-pointer group">
+                                <div class="bg-teal-50 text-teal-500 p-2 rounded group-hover:bg-teal-100 transition">📋</div>
+                                <div class="flex-grow min-w-0">
+                                    <p class="text-sm font-medium text-stone-800 truncate">Prescription_Antibiotics.docx</p>
+                                    <p class="text-xs text-stone-400">12 KB • Jan 08</p>
+                                </div>
+                                <div class="text-stone-300">🔒</div>
+                            </div>
+                        </div>
+                        <button onclick="openUploadModal()" class="w-full mt-4 py-3 bg-teal-50 border border-teal-200 text-teal-700 text-sm font-bold rounded-lg hover:bg-teal-100 transition flex items-center justify-center gap-2">
+                            <span>📤 Upload New Record</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <footer class="bg-white border-t border-stone-200 mt-auto py-6">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-stone-400">
+            <p>MedVault Cloud Portal v1.0 • Protected by AWS KMS • HIPAA Compliant</p>
+        </div>
+    </footer>
+</div>
+<!-- END PATIENT PORTAL -->
+
+<!-- SECURE UPLOAD MODAL (NEW) -->
+<div id="upload-modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-[60] hidden flex items-center justify-center transition-opacity opacity-0">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300" id="upload-modal-content">
+        <!-- Header -->
+        <div class="bg-teal-600 p-5 rounded-t-2xl flex justify-between items-center text-white">
+            <div>
+                <h3 class="font-bold text-lg flex items-center gap-2">
+                    <span class="text-xl">☁️</span> Secure Upload
+                </h3>
+                <p class="text-xs text-teal-100 opacity-90">Direct to S3 (Encrypted)</p>
+            </div>
+            <button onclick="closeUploadModal()" class="text-teal-200 hover:text-white transition text-2xl leading-none">&times;</button>
+        </div>
+        <!-- Body -->
+        <div class="p-6 space-y-5">
+            <!-- Record Type Selection -->
+            <div>
+                <label class="block text-xs font-bold text-stone-500 uppercase mb-2">Record Type</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="selectUploadType(this, 'Lab')" class="upload-type-btn border border-stone-200 rounded-lg p-2 text-center hover:bg-teal-50 hover:border-teal-500 hover:text-teal-700 transition">
+                        <span class="block text-lg">🧪</span>
+                        <span class="text-xs font-medium">Lab Report</span>
+                    </button>
+                    <button onclick="selectUploadType(this, 'Imaging')" class="upload-type-btn border border-stone-200 rounded-lg p-2 text-center hover:bg-teal-50 hover:border-teal-500 hover:text-teal-700 transition">
+                        <span class="block text-lg">🩻</span>
+                        <span class="text-xs font-medium">Imaging</span>
+                    </button>
+                    <button onclick="selectUploadType(this, 'Rx')" class="upload-type-btn border border-stone-200 rounded-lg p-2 text-center hover:bg-teal-50 hover:border-teal-500 hover:text-teal-700 transition">
+                        <span class="block text-lg">💊</span>
+                        <span class="text-xs font-medium">Prescription</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- File Drop Zone -->
+            <div class="border-2 border-dashed border-stone-300 rounded-xl p-8 text-center bg-stone-50 cursor-pointer hover:border-teal-500 transition group" onclick="document.getElementById('hidden-file-input').click()">
+                <input type="file" id="hidden-file-input" class="hidden" onchange="handleFileSelect(this)">
+                <div class="text-4xl text-stone-300 group-hover:text-teal-500 transition mb-2">📂</div>
+                <p class="text-sm font-bold text-stone-600 group-hover:text-teal-700" id="upload-filename">Click to Select File</p>
+                <p class="text-xs text-stone-400 mt-1">PDF, JPG, PNG (Max 10MB)</p>
+            </div>
+
+            <!-- Progress Bar (Hidden) -->
+            <div id="modal-upload-progress" class="hidden">
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="font-bold text-teal-700">Encrypting with KMS...</span>
+                    <span id="modal-progress-text">0%</span>
+                </div>
+                <div class="w-full bg-stone-100 rounded-full h-2 overflow-hidden">
+                    <div id="modal-progress-bar" class="bg-teal-500 h-full w-0 transition-all duration-300"></div>
+                </div>
+            </div>
+
+            <!-- Action Button -->
+            <button onclick="performUpload()" id="modal-upload-btn" class="w-full py-3 bg-stone-800 text-white rounded-lg font-bold hover:bg-stone-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                Upload Securely
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- CODE VIEW MODAL -->
+<div id="code-modal" class="fixed inset-0 bg-stone-900/80 backdrop-blur-sm z-[70] hidden flex items-center justify-center transition-opacity opacity-0">
+    <div class="bg-[#1e1e1e] rounded-xl shadow-2xl w-full max-w-3xl transform scale-95 transition-transform duration-300 border border-stone-700" id="code-modal-content">
+        <div class="flex justify-between items-center p-4 border-b border-stone-700 bg-[#252526] rounded-t-xl">
+            <div class="flex items-center gap-3">
+                <div class="flex gap-1.5">
+                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                </div>
+                <span class="text-stone-400 text-xs font-mono ml-2" id="code-filename">main.tf</span>
+            </div>
+            <button onclick="closeCodeModal()" class="text-stone-400 hover:text-white">&times;</button>
+        </div>
+        <div class="p-0 overflow-auto max-h-[60vh]">
+            <pre class="text-xs md:text-sm font-mono text-gray-300 p-6 leading-relaxed whitespace-pre-wrap" id="code-block"></pre>
+        </div>
+        <div class="p-3 border-t border-stone-700 bg-[#252526] rounded-b-xl flex justify-end">
+            <button onclick="closeCodeModal()" class="px-4 py-2 bg-stone-700 hover:bg-stone-600 text-white text-xs rounded transition">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- GEMINI AI WIDGET (NOW SHARED & DYNAMIC) -->
+<div id="ai-architect-widget" class="fixed bottom-6 right-6 z-50 flex flex-col items-end pointer-events-none hidden">
+    <!-- Chat Window -->
+    <div id="chat-window" class="chat-widget pointer-events-auto bg-white rounded-2xl shadow-2xl border border-stone-200 w-80 sm:w-96 mb-4 transform translate-y-10 opacity-0 scale-95 origin-bottom-right hidden flex flex-col" style="height: 500px;">
+        <!-- Header -->
+        <div class="bg-teal-700 p-4 rounded-t-2xl flex justify-between items-center text-white">
+            <div class="flex items-center gap-2">
+                <span class="text-xl">✨</span>
+                <div>
+                    <h3 class="font-bold text-sm" id="ai-header-title">AI Assistant</h3>
+                    <p class="text-xs text-teal-200" id="ai-header-subtitle">Ask me anything</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="toggleKeySettings()" class="text-teal-200 hover:text-white transition" title="API Settings">⚙️</button>
+                <button onclick="toggleChat()" class="text-teal-200 hover:text-white transition text-xl">&times;</button>
+            </div>
+        </div>
+
+        <!-- API Key Settings (Hidden by default) -->
+        <div id="api-key-panel" class="hidden p-4 bg-stone-100 border-b border-stone-200 text-xs">
+            <p class="font-bold text-stone-700 mb-2">MedVault AI Key</p>
+            <input type="password" id="user-api-key" placeholder="Paste your API Key here..." class="w-full p-2 border border-stone-300 rounded mb-2" onchange="saveApiKey(this.value)">
+            <p class="text-stone-500 text-[10px]">Leave empty to use simulated responses.</p>
+        </div>
+
+        <!-- Messages Area -->
+        <div id="chat-messages" class="flex-grow overflow-y-auto p-4 space-y-4 bg-stone-50 terminal-scroll">
+            <!-- Welcome Message populated by JS -->
+        </div>
+
+        <!-- Input Area -->
+        <div class="p-4 bg-white border-t border-stone-200 rounded-b-2xl">
+            <div class="flex gap-2">
+                <input type="text" id="user-input" placeholder="Type a message..." 
+                       class="flex-grow px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
+                       onkeypress="handleKeyPress(event)">
+                <button onclick="sendMessage()" id="send-btn" class="bg-teal-600 text-white p-2 rounded-lg hover:bg-teal-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                    </svg>
+                </button>
+            </div>
+            <p class="text-[10px] text-stone-400 mt-2 text-center">Powered by MedVault Secure AI ✨</p>
+        </div>
+    </div>
+
+    <!-- Floating Button -->
+    <button onclick="toggleChat()" id="fab-btn" class="pointer-events-auto bg-teal-600 text-white p-4 rounded-full shadow-lg hover:bg-teal-700 hover:scale-105 transition-all duration-300 group flex items-center gap-2">
+        <span class="text-2xl group-hover:rotate-12 transition-transform">✨</span>
+        <span class="font-bold pr-2 hidden group-hover:inline-block transition-all" id="fab-text">Ask AI</span>
+    </button>
+</div>
+
+<!-- JavaScript Logic -->
+<script>
+    // --- CONFIGURATION & STATE ---
+    const envApiKey = ""; // Default environment key (empty)
+    let currentRole = 'admin'; // 'admin' or 'patient'
+
+    // --- PERSONAS ---
+    const personas = {
+        admin: {
+            title: 'AI Lead Architect',
+            subtitle: 'Infrastructure & Security',
+            fab: 'Ask Architect',
+            basePrompt: `You are the Lead Cloud Architect for MedVault Cloud (Personal Health Record) System.
+                         Tech Stack: AWS, Terraform, Python (Flask), RDS (PostgreSQL), S3 (SSE-KMS AES-256).
+                         Security: Zero-Trust IAM, Network Isolation (Private Subnets).`,
+            welcome: `Hi! I'm the Lead Architect. Ask me about the AWS stack, Terraform code, or security controls!`,
+            suggestions: [
+                { text: '🛡️ Zero-Trust?', query: 'How does Zero-Trust work here?' },
+                { text: '🕸️ Subnets?', query: 'Why use a Private Subnet?' },
+                { text: '🔒 KMS?', query: 'Explain the KMS Encryption' }
+            ]
+        },
+        patient: {
+            title: 'Dr. AI Assistant',
+            subtitle: 'Personal Health Insights',
+            fab: 'Health Assistant',
+            basePrompt: `You are a helpful AI Health Assistant for the MedVault Cloud Patient Portal.
+                         The patient is Alice Freeman (ID: PHR-8821).`,
+            welcome: `Hello Alice! I see your vitals are looking good today. How can I help you understand your records?`,
+            suggestions: [
+                { text: '❤️ Analysis?', query: 'Based on my recent heart rate and BP, how am I doing?' },
+                { text: '💊 Allergies?', query: 'What allergies do I have on file?' },
+                { text: '🧪 Lab Tests?', query: 'What do my recent lab results check for?' }
+            ]
+        }
+    };
+
+    // --- HELPER TO FILL CREDENTIALS ---
+    function selectRole(role) {
+        const email = document.getElementById('auth-email');
+        const tabAdmin = document.getElementById('role-tab-admin');
+        const tabPatient = document.getElementById('role-tab-patient');
+
+        if (role === 'admin') {
+            email.value = 'admin@hospital.org';
+            tabAdmin.classList.replace('text-stone-500', 'text-teal-700');
+            tabAdmin.classList.add('font-bold', 'bg-teal-50', 'border-teal-600');
+            tabAdmin.classList.remove('hover:bg-stone-50', 'border-transparent'); // Clean up
+
+            tabPatient.classList.replace('text-teal-700', 'text-stone-500');
+            tabPatient.classList.remove('font-bold', 'bg-teal-50', 'border-teal-600');
+        } else {
+            email.value = 'alice@patient.com';
+            tabPatient.classList.replace('text-stone-500', 'text-teal-700');
+            tabPatient.classList.add('font-bold', 'bg-teal-50', 'border-teal-600');
+            
+            tabAdmin.classList.replace('text-teal-700', 'text-stone-500');
+            tabAdmin.classList.remove('font-bold', 'bg-teal-50', 'border-teal-600');
+        }
+    }
+
+    // --- AUTHENTICATION LOGIC WITH VIEW TRANSITIONS ---
+    function handleLogin() {
+        const emailInput = document.getElementById('auth-email');
+        const btn = document.getElementById('login-btn');
+        const spinner = document.getElementById('login-spinner');
+        const btnText = btn.querySelector('span:first-child');
+
+        btnText.innerText = "Authenticating...";
+        spinner.classList.remove('hidden');
+        btn.disabled = true;
+        btn.classList.add('opacity-75');
+
+        setTimeout(() => {
+            const isPatient = emailInput.value.includes('patient');
+            currentRole = isPatient ? 'patient' : 'admin';
+
+            // Helper function to update DOM
+            const updateDOM = () => {
+                updateAIWidget(currentRole);
+                document.getElementById('auth-view').classList.add('hidden');
+                
+                if (isPatient) {
+                    const pView = document.getElementById('patient-view');
+                    pView.classList.remove('hidden');
+                } else {
+                    const aView = document.getElementById('admin-view');
+                    aView.classList.remove('hidden');
+                    // Admin Terminal Log
+                    const terminal = document.getElementById('terminal-content');
+                    if(terminal) {
+                        terminal.innerHTML += `\n<span class="text-green-400 font-bold">[AUTH] Identity Confirmed via AWS Cognito.</span>\n<span class="text-stone-500">User: ${emailInput.value}</span>\n\nuser@local:~/secure-phr-aws$ `;
+                        terminal.scrollTop = terminal.scrollHeight;
+                    }
+                    // START SOC SIMULATION
+                    startThreatSim();
+                }
+                
+                // Show AI Widget for everyone now
+                document.getElementById('ai-architect-widget').classList.remove('hidden');
+            };
+
+            // Use View Transition API if available
+            if (document.startViewTransition) {
+                document.startViewTransition(() => updateDOM());
+            } else {
+                // Fallback for older browsers
+                updateDOM();
+            }
+        }, 1000);
+    }
+
+    function handleLogout() {
+        if (document.startViewTransition) {
+            document.startViewTransition(() => location.reload());
+        } else {
+            location.reload();
+        }
+    }
+
+    // --- UPLOAD MODAL LOGIC ---
+    function openUploadModal() {
+        const modal = document.getElementById('upload-modal');
+        const content = document.getElementById('upload-modal-content');
+        modal.classList.remove('hidden');
+        // Small delay for transition
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            content.classList.remove('scale-95');
+            content.classList.add('scale-100');
+        }, 10);
+    }
+
+    function closeUploadModal() {
+        const modal = document.getElementById('upload-modal');
+        const content = document.getElementById('upload-modal-content');
+        modal.classList.add('opacity-0');
+        content.classList.remove('scale-100');
+        content.classList.add('scale-95');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            resetUploadModal(); // Reset fields
+        }, 200);
+    }
+
+    function selectUploadType(btn, type) {
+        // Reset others
+        document.querySelectorAll('.upload-type-btn').forEach(b => {
+            b.classList.remove('bg-teal-100', 'border-teal-500', 'text-teal-800');
+        });
+        // Select this
+        btn.classList.add('bg-teal-100', 'border-teal-500', 'text-teal-800');
+        btn.dataset.selected = "true";
+    }
+
+    function handleFileSelect(input) {
+        if (input.files && input.files[0]) {
+            document.getElementById('upload-filename').innerText = input.files[0].name;
+            document.getElementById('upload-filename').classList.add('text-teal-600');
+        }
+    }
+
+    function resetUploadModal() {
+        document.getElementById('modal-upload-progress').classList.add('hidden');
+        document.getElementById('modal-upload-btn').classList.remove('hidden');
+        document.getElementById('upload-filename').innerText = "Click to Select File";
+        document.getElementById('upload-filename').classList.remove('text-teal-600');
+        document.getElementById('modal-progress-bar').style.width = '0%';
+        document.querySelectorAll('.upload-type-btn').forEach(b => {
+            b.classList.remove('bg-teal-100', 'border-teal-500', 'text-teal-800');
+        });
+    }
+
+    function performUpload() {
+        const btn = document.getElementById('modal-upload-btn');
+        const progressArea = document.getElementById('modal-upload-progress');
+        const bar = document.getElementById('modal-progress-bar');
+        const text = document.getElementById('modal-progress-text');
+        const filename = document.getElementById('upload-filename').innerText;
+
+        if (filename.includes("Click")) {
+            alert("Please select a file first.");
+            return;
+        }
+
+        btn.classList.add('hidden');
+        progressArea.classList.remove('hidden');
+
+        let width = 0;
+        const interval = setInterval(() => {
+            if (width >= 100) {
+                clearInterval(interval);
+                text.innerText = "Upload Complete!";
+                text.classList.add('text-green-600');
+                setTimeout(() => {
+                    closeUploadModal();
+                    addFileToPatientList(filename);
+                }, 800);
+            } else {
+                width += 5; 
+                bar.style.width = width + '%';
+                text.innerText = width + '%';
+            }
+        }, 100);
+    }
+
+    function addFileToPatientList(name) {
+        const list = document.getElementById('patient-file-list');
+        const newItem = document.createElement('div');
+        newItem.className = "flex items-center gap-3 p-3 rounded-lg border border-stone-100 bg-teal-50 animate-pulse"; // Flash new
+        newItem.innerHTML = `
+            <div class="bg-teal-50 text-teal-500 p-2 rounded">✨</div>
+            <div class="flex-grow min-w-0">
+                <p class="text-sm font-medium text-stone-800 truncate">${name}</p>
+                <p class="text-xs text-stone-400">Just now • Encrypted</p>
+            </div>
+            <div class="text-stone-300">🔒</div>
+        `;
+        list.prepend(newItem);
+        setTimeout(() => newItem.classList.remove('animate-pulse', 'bg-teal-50'), 2000);
+    }
+
+    // --- THREAT SIMULATION LOGIC ---
+    function startThreatSim() {
+        const feed = document.getElementById('threat-feed');
+        if(!feed) return;
+        
+        // Clear placeholder
+        feed.innerHTML = ''; 
+        
+        const ips = ['192.168.1.45', '10.2.4.55', '172.16.0.22', '45.33.22.11', '89.201.2.4'];
+        const attacks = ['SQL Injection', 'XSS Attempt', 'Bad Bot', 'Port Scan', 'DDOS Vol'];
+
+        setInterval(() => {
+            // Random Chance to add log
+            if(Math.random() > 0.4) {
+                const ip = ips[Math.floor(Math.random() * ips.length)];
+                const attack = attacks[Math.floor(Math.random() * attacks.length)];
+                const time = new Date().toLocaleTimeString();
+
+                const line = document.createElement('div');
+                line.className = "threat-entry flex items-center gap-2 text-[10px] md:text-xs border-b border-slate-800 pb-1";
+                line.innerHTML = `<span class="text-slate-500 w-16">[${time}]</span> <span class="text-red-400 font-bold w-12">BLOCK</span> <span class="text-slate-300 flex-grow">${attack} from ${ip}</span> <span class="text-teal-600 hidden md:inline">WAF#102</span>`;
+                
+                feed.prepend(line);
+                if(feed.children.length > 8) feed.lastChild.remove();
+            }
+        }, 2500);
+    }
+
+    // --- CHAOS ENGINEERING LOGIC ---
+    function triggerChaos(type) {
+        const terminal = document.getElementById('terminal-content');
+        if (type === 'ec2-fail') {
+            terminal.innerHTML += `\n<span class="text-red-500 font-bold">[CHAOS] Initiating Simulated Failure on instance i-0f4b3...</span>`;
+            terminal.innerHTML += `\n<span class="text-stone-400">Stopping instance...</span>`;
+            setTimeout(() => {
+                terminal.innerHTML += `\n<span class="text-yellow-400">[AWS AutoScaling] Alarm: Group Desired Capacity < Actual.</span>`;
+                terminal.innerHTML += `\n<span class="text-green-400">[AWS AutoScaling] Launching new instance i-0a1b2c3...</span>`;
+                terminal.innerHTML += `\n<span class="text-teal-400">[RECOVERY] Health check passed. System restored.</span>\nuser@local:~/secure-phr-aws$ `;
+                terminal.scrollTop = terminal.scrollHeight;
+            }, 2000);
+        } else if (type === 'sql-inject') {
+            terminal.innerHTML += `\n<span class="text-orange-500 font-bold">[TEST] Injecting payload: "' OR 1=1 --" to endpoint /login...</span>`;
+            setTimeout(() => {
+                terminal.innerHTML += `\n<span class="text-red-400">[AWS WAF] Match Rule: AWS-AWSManagedRulesSQLiRuleSet</span>`;
+                terminal.innerHTML += `\n<span class="text-green-400">[BLOCK] 403 Forbidden sent to client.</span>`;
+                terminal.innerHTML += `\n<span class="text-teal-400">[SUCCESS] WAF successfully mitigated attack.</span>\nuser@local:~/secure-phr-aws$ `;
+                terminal.scrollTop = terminal.scrollHeight;
+            }, 1500);
+        }
+        terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    // --- TERRAFORM SIMULATION LOGIC (IMPLEMENTED) ---
+    function runSim(command) {
+        const terminal = document.getElementById('terminal-content');
+        if (!terminal) return;
+
+        if (command === 'init') {
+            terminal.innerHTML += `\n<span class="text-stone-300">user@bastion:~$ terraform init</span>`;
+            terminal.innerHTML += `\n<span class="text-stone-400">Initializing the backend...</span>`;
+            setTimeout(() => {
+                terminal.innerHTML += `\n<span class="text-stone-400">Initializing provider plugins...</span>`;
+                terminal.innerHTML += `\n<span class="text-stone-400">- Reusing previous version of hashicorp/aws from the dependency lock file</span>`;
+                terminal.innerHTML += `\n<span class="text-stone-400">- Installing hashicorp/aws v5.10.0...</span>`;
+            }, 800);
+            setTimeout(() => {
+                terminal.innerHTML += `\n<span class="text-green-400 font-bold">Terraform has been successfully initialized!</span>\nuser@bastion:~/secure-phr-aws$ `;
+                terminal.scrollTop = terminal.scrollHeight;
+            }, 2000);
+        } else if (command === 'apply') {
+            terminal.innerHTML += `\n<span class="text-stone-300">user@bastion:~$ terraform apply</span>`;
+            setTimeout(() => {
+                terminal.innerHTML += `\n<span class="text-stone-400">data.aws_ami.ubuntu: Reading...</span>`;
+                terminal.innerHTML += `\n<span class="text-stone-400">aws_vpc.main: Refreshing state... [id=vpc-0a1b2c3d4e]</span>`;
+            }, 500);
+            setTimeout(() => {
+                terminal.innerHTML += `\n<span class="text-yellow-400 font-bold">Plan:</span> 3 to add, 0 to change, 0 to destroy.`;
+                terminal.innerHTML += `\n<span class="text-stone-300">Do you want to perform these actions? type 'yes' (simulated)</span>`;
+            }, 1500);
+            setTimeout(() => {
+                terminal.innerHTML += `\n<span class="text-stone-300">aws_instance.app_server: Creating...</span>`;
+                terminal.innerHTML += `\n<span class="text-stone-300">aws_db_instance.default: Creating...</span>`;
+                terminal.innerHTML += `\n<span class="text-green-400 font-bold">Apply complete! Resources: 3 added, 0 changed, 0 destroyed.</span>\nuser@bastion:~/secure-phr-aws$ `;
+                terminal.scrollTop = terminal.scrollHeight;
+            }, 3500);
+        }
+    }
+
+    // --- AI WIDGET LOGIC ---
+    let isChatOpen = false;
+    const chatWindow = document.getElementById('chat-window');
+    const fabBtn = document.getElementById('fab-btn');
+    const chatMessages = document.getElementById('chat-messages');
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+
+    // Initialize key from storage
+    document.getElementById('user-api-key').value = localStorage.getItem('medvault_ai_key') || "";
+
+    function toggleKeySettings() {
+        const panel = document.getElementById('api-key-panel');
+        panel.classList.toggle('hidden');
+    }
+
+    function saveApiKey(val) {
+        localStorage.setItem('medvault_ai_key', val);
+    }
+
+    function getApiKey() {
+        // Priority: User Setting > Environment Variable
+        return localStorage.getItem('medvault_ai_key') || envApiKey;
+    }
+
+    function updateAIWidget(role) {
+        const p = personas[role];
+        document.getElementById('ai-header-title').innerText = p.title;
+        document.getElementById('ai-header-subtitle').innerText = p.subtitle;
+        document.getElementById('fab-text').innerText = p.fab;
+
+        // Clear & Add Welcome
+        chatMessages.innerHTML = '';
+        
+        // Add Welcome Message
+        const div = document.createElement('div');
+        div.className = `flex gap-2 chat-message`;
+        div.innerHTML = `
+            <div class="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center flex-shrink-0 text-sm">🤖</div>
+            <div class="bg-white p-3 rounded-2xl rounded-tl-none border border-stone-100 shadow-sm text-sm text-stone-700 prose-sm">
+                <p>${p.welcome}</p>
+            </div>
+        `;
+        chatMessages.appendChild(div);
+
+        // Add Suggestions
+        const suggestDiv = document.createElement('div');
+        suggestDiv.className = "flex flex-wrap gap-2 mt-2";
+        suggestDiv.id = "suggested-questions";
+        
+        p.suggestions.forEach(s => {
+            const btn = document.createElement('button');
+            btn.className = "text-xs bg-stone-200 hover:bg-teal-100 text-stone-600 hover:text-teal-700 px-3 py-1 rounded-full transition";
+            btn.innerText = s.text;
+            btn.onclick = () => sendQuickMessage(s.query);
+            suggestDiv.appendChild(btn);
+        });
+        chatMessages.appendChild(suggestDiv);
+    }
+
+    function toggleChat() {
+        isChatOpen = !isChatOpen;
+        if (isChatOpen) {
+            chatWindow.classList.remove('hidden');
+            setTimeout(() => {
+                chatWindow.classList.remove('opacity-0', 'translate-y-10', 'scale-95');
+                fabBtn.classList.add('opacity-0', 'pointer-events-none');
+            }, 10);
+        } else {
+            chatWindow.classList.add('opacity-0', 'translate-y-10', 'scale-95');
+            setTimeout(() => {
+                chatWindow.classList.add('hidden');
+                fabBtn.classList.remove('opacity-0', 'pointer-events-none');
+            }, 300);
+        }
+    }
+
+    function sendQuickMessage(text) {
+        userInput.value = text;
+        sendMessage();
+    }
+
+    function handleKeyPress(event) {
+        if (event.key === 'Enter') sendMessage();
+    }
+
+    // --- DYNAMIC CONTEXT BUILDING ---
+    function getContextPrompt(role) {
+        const p = personas[role];
+        let dynamicData = "";
+        
+        if (role === 'admin') {
+            // Scrape Admin Dashboard Data
+            const cost = document.getElementById('cloud-cost')?.innerText || "$1.45";
+            const threats = document.getElementById('threat-feed')?.childElementCount || 0;
+            dynamicData = `\n[LIVE DASHBOARD DATA]\nCurrent Daily Cost: ${cost}\nActive Threats Blocked recently: ${threats}`;
+        } else {
+            // Scrape Patient Dashboard Data
+            const hr = document.getElementById('vitals-hr')?.innerText || "72 bpm";
+            const bp = document.getElementById('vitals-bp')?.innerText || "118/78 mmHg";
+            dynamicData = `\n[LIVE DASHBOARD DATA]\nCurrent Heart Rate: ${hr}\nCurrent BP: ${bp}\nKnown Allergies: Penicillin\nBlood Type: O+`;
+        }
+
+        return p.basePrompt + dynamicData;
+    }
+
+    async function sendMessage() {
+        const text = userInput.value.trim();
+        if (!text) return;
+
+        // 1. Add User Message
+        addMessage(text, 'user');
+        userInput.value = '';
+        sendBtn.disabled = true;
+
+        const s = document.getElementById('suggested-questions');
+        if(s) s.style.display = 'none';
+
+        // 2. Add Loading
+        const loadingId = addLoadingIndicator();
+
+        try {
+            // 3. Build Context & Call API
+            const systemPrompt = getContextPrompt(currentRole);
+            const response = await callMedVaultAI(text, systemPrompt);
+            
+            removeLoadingIndicator(loadingId);
+            addMessage(response, 'ai');
+        } catch (error) {
+            removeLoadingIndicator(loadingId);
+            // Smart Fallback if API Key is missing or invalid
+            const fallback = getSimulatedResponse(text, currentRole);
+            addMessage(fallback + "\n\n*(Simulation mode: Add API Key in ⚙️ settings for real AI)*", 'ai');
+            console.error(error);
+        } finally {
+            sendBtn.disabled = false;
+            setTimeout(() => userInput.focus(), 100);
+        }
+    }
+
+    function getSimulatedResponse(query, role) {
+        query = query.toLowerCase();
+        if (role === 'admin') {
+            if(query.includes('zero') || query.includes('trust')) return "Zero Trust is implemented by strictly using IAM Roles for EC2-S3 access. No hardcoded keys are present in the codebase.";
+            if(query.includes('subnet') || query.includes('private')) return "The RDS Database is placed in a Private Subnet (10.0.2.0/24) to isolate it from direct internet access, reducing the attack surface.";
+            return "I can explain the architecture. Try asking about 'Encryption', 'Terraform', or 'Security Groups'.";
+        } else {
+            if(query.includes('heart') || query.includes('bp') || query.includes('doing')) return "Your heart rate is 72 bpm and BP is 118/78 mmHg. Both are within healthy ranges for an adult!";
+            if(query.includes('allergy') || query.includes('allergies')) return "Our records indicate you have a known allergy to **Penicillin**. Please ensure your prescribing doctor is aware.";
+            return "I'm your health assistant. I can interpret your vitals or medical records. How can I help?";
+        }
+    }
+
+    function addMessage(text, sender) {
+        const div = document.createElement('div');
+        div.className = `flex gap-2 chat-message ${sender === 'user' ? 'flex-row-reverse' : ''}`;
+        
+        const avatar = sender === 'ai' ? '🤖' : '👤';
+        const bgClass = sender === 'ai' ? 'bg-white text-stone-700' : 'bg-teal-600 text-white';
+        const alignClass = sender === 'ai' ? 'rounded-tl-none' : 'rounded-tr-none';
+        
+        const content = sender === 'ai' ? marked.parse(text) : `<p>${text}</p>`;
+        
+        div.innerHTML = `
+            <div class="w-8 h-8 rounded-full ${sender === 'ai' ? 'bg-teal-100' : 'bg-stone-200'} flex items-center justify-center flex-shrink-0 text-sm">${avatar}</div>
+            <div class="${bgClass} p-3 rounded-2xl ${alignClass} shadow-sm text-sm max-w-[85%] prose-sm">
+                ${content}
+            </div>
+        `;
+        
+        chatMessages.appendChild(div);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function addLoadingIndicator() {
+        const id = 'loading-' + Date.now();
+        const div = document.createElement('div');
+        div.id = id;
+        div.className = `flex gap-2 chat-message`;
+        div.innerHTML = `
+            <div class="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center flex-shrink-0 text-sm">🤖</div>
+            <div class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm text-sm flex gap-1 items-center">
+                <div class="w-2 h-2 bg-stone-400 rounded-full typing-dot"></div>
+                <div class="w-2 h-2 bg-stone-400 rounded-full typing-dot"></div>
+                <div class="w-2 h-2 bg-stone-400 rounded-full typing-dot"></div>
+            </div>
+        `;
+        chatMessages.appendChild(div);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        return id;
+    }
+
+    function removeLoadingIndicator(id) {
+        const el = document.getElementById(id);
+        if (el) el.remove();
+    }
+
+    async function callMedVaultAI(userQuery, sysPrompt) {
+        const key = getApiKey();
+        if(!key) throw new Error("No API Key");
+        
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`;
+        
+        const payload = {
+            contents: [{ role: "user", parts: [{ text: userQuery }] }],
+            systemInstruction: { parts: [{ text: sysPrompt }] }
+        };
+
+        const response = await fetchWithBackoff(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        return data.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated.";
+    }
+
+    async function fetchWithBackoff(url, options, retries = 3, delay = 1000) {
+        for (let i = 0; i < retries; i++) {
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    if (response.status >= 500 || response.status === 429) throw new Error("Retry");
+                    throw new Error(`API Error: ${response.status}`);
+                }
+                return response;
+            } catch (error) {
+                if (i === retries - 1) throw error;
+                await new Promise(res => setTimeout(res, delay * Math.pow(2, i)));
+            }
+        }
+    }
+
+    // --- CHART INITIALIZATION (Existing) ---
+    document.addEventListener('DOMContentLoaded', () => {
+        // Patient Vitals (Patient)
+        if(document.getElementById('patientVitalsChart')) {
+            const ctxVitals = document.getElementById('patientVitalsChart').getContext('2d');
+            new Chart(ctxVitals, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [
+                        { label: 'Heart Rate', data: [70, 72, 71, 74, 72, 73, 72], borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', tension: 0.4 },
+                        { label: 'Systolic BP', data: [118, 120, 119, 121, 120, 118, 118], borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', tension: 0.4 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: false, min: 60 }, x: { grid: { display: false } } } }
+            });
+        }
+        
+        // Trigger default view logic for admin just in case
+        // if (document.getElementById('detail-content')) showDetails('ec2');
+    });
+
+    // --- CODE VIEWER LOGIC ---
+    const terraformCode = {
+        'ec2': `resource "aws_instance" "app_server" {
+  ami           = "ami-0c7217cdde317cfec" # Ubuntu 22.04 LTS
+  instance_type = "t2.micro"              # Free Tier Eligible
+  subnet_id     = var.public_subnet_id
+
+  # IAM Role for secure S3 Access
+  iam_instance_profile = var.iam_instance_profile
+  
+  # Security Group
+  vpc_security_group_ids = [aws_security_group.web_sg.id]
+
+  tags = {
+    Name = "PHR-App-Server"
+  }
+
+  user_data = <<-EOF
+              #!/bin/bash
+              apt-get update -y
+              apt-get install -y python3-pip python3-venv git
+              # ... setup script ...
+              EOF
+}`,
+        'rds': `resource "aws_db_instance" "default" {
+  allocated_storage    = 20
+  db_name              = "phrdb"
+  engine               = "postgres"
+  engine_version       = "16.3"
+  instance_class       = "db.t3.micro" 
+  username             = "phradmin"
+  password             = var.db_password # Secured via Secrets Manager in prod
+  
+  # Network Isolation
+  publicly_accessible  = false 
+  db_subnet_group_name = aws_db_subnet_group.phr_db_subnet.name
+  vpc_security_group_ids = [var.vpc_security_group_id]
+  
+  skip_final_snapshot  = true 
+  tags = { Name = "PHR-Database" }
+}`,
+        's3': `resource "aws_s3_bucket" "phr_bucket" {
+  bucket = var.bucket_name
+  force_destroy = true 
+}
+
+# Server-Side Encryption
+resource "aws_s3_bucket_server_side_encryption_configuration" "enc" {
+  bucket = aws_s3_bucket.phr_bucket.id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+# Public Access Block
+resource "aws_s3_bucket_public_access_block" "block" {
+  bucket = aws_s3_bucket.phr_bucket.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}`
+    };
+
+    function showDetails(componentKey) {
+        const data = {
+            'ec2': { title: 'EC2 Instance', icon: '💻', desc: 'App Server (Flask)', specs: [{label:'AMI', value:'Ubuntu 22.04'}, {label:'Type', value:'t2.micro'}] },
+            'rds': { title: 'RDS Database', icon: '🗄️', desc: 'PostgreSQL (Private)', specs: [{label:'Engine', value:'Postgres 16'}, {label:'Access', value:'Private Subnet'}] },
+            's3': { title: 'S3 Bucket', icon: '📦', desc: 'Encrypted Storage', specs: [{label:'Encryption', value:'SSE-KMS'}, {label:'Access', value:'Blocked Public'}] }
+        }[componentKey];
+
+        const container = document.getElementById('detail-content');
+        if(!container || !data) return;
+
+        let specsHtml = data.specs.map(s => 
+            `<div class="flex justify-between border-b border-stone-100 py-2">
+                <span class="text-stone-500 text-sm">${s.label}</span>
+                <span class="font-mono text-sm text-stone-800 font-medium">${s.value}</span>
+             </div>`
+        ).join('');
+
+        container.innerHTML = `
+            <div class="animate-fade-in-up">
+                <div class="flex items-center space-x-4 mb-4">
+                    <div class="text-4xl bg-stone-100 p-3 rounded-lg">${data.icon}</div>
+                    <div>
+                        <h4 class="text-xl font-bold text-stone-900">${data.title}</h4>
+                        <span class="text-xs font-bold text-teal-600 bg-teal-50 px-2 py-1 rounded">Active</span>
+                    </div>
+                </div>
+                <p class="text-stone-600 mb-6 leading-relaxed">${data.desc}</p>
+                <div class="bg-stone-50 rounded-lg p-4 mb-4">${specsHtml}</div>
+            </div>
+        `;
+
+        // Show action button and attach handler
+        const actionDiv = document.getElementById('detail-action');
+        actionDiv.classList.remove('hidden');
+        
+        const btn = document.getElementById('view-tf-btn');
+        btn.onclick = () => openCodeModal(componentKey);
+    }
+
+    function openCodeModal(key) {
+        const modal = document.getElementById('code-modal');
+        const content = document.getElementById('code-modal-content');
+        const codeBlock = document.getElementById('code-block');
+        const filename = document.getElementById('code-filename');
+
+        // Set Content
+        codeBlock.innerText = terraformCode[key] || "# No code available";
+        filename.innerText = `${key}/main.tf`;
+
+        // Show
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            content.classList.remove('scale-95');
+            content.classList.add('scale-100');
+        }, 10);
+    }
+
+    function closeCodeModal() {
+        const modal = document.getElementById('code-modal');
+        const content = document.getElementById('code-modal-content');
+        modal.classList.add('opacity-0');
+        content.classList.remove('scale-100');
+        content.classList.add('scale-95');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+
+    function scrollToSection(id) { document.getElementById(id).scrollIntoView({ behavior: 'smooth' }); }
+</script>
+</body>
+</html>

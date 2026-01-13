@@ -123,6 +123,8 @@ Access the portal at http://localhost:5000.
 
 <h2 align="center" style="font-size: 3em;">📂 Project Structure</h2>
 
+
+
 medvault-cloud/
 ├── app.py                  # Main Flask Application Entry Point
 ├── config.py               # Security & AWS Configuration
@@ -138,6 +140,7 @@ medvault-cloud/
 │   └── iam/                # Terraform IAM Policies
 └── templates/              # HTML Frontend Templates
     └── login.html          # (And other UI templates)
+
 
 
 <h2 align="center" style="font-size: 3em;">🤖 AI Integration</h2>

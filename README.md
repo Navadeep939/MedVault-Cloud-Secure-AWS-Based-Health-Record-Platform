@@ -83,7 +83,7 @@ tabase: PostgreSQL (AWS RDS)
 <h3 align="center" style="font-size: 2em;">Installation</h3>
 
 Clone the Repository
-git clone [https://github.com/yourusername/medvault-cloud.git](https://github.com/Navadeep939/medvault-cloud.git)
+git clone [https://github.com/yourusername/medvault-cloud.git](https://github.com/navadeep939/medvault-cloud.git)
 cd medvault-cloud
 
 

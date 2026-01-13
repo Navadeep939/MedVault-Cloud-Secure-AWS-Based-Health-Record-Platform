@@ -17,7 +17,19 @@ Data Tier: Amazon RDS (PostgreSQL) & S3 (KMS Encrypted) for records.
 
                       High-Level Architecture Diagram
                      
+<h3 align="center" style="font-size: 2em;">Key Security Controls</h3>
 
+Network Isolation: Database and Logic tiers reside in Private Subnets.
+
+Encryption at Rest: All S3 objects are encrypted using AWS KMS (AES-256).
+
+Encryption in Transit: TLS 1.3 enforced for all connections.
+
+IAM Least Privilege: EC2 instances use restricted IAM Roles to access S3.
+
+WAF Integration: Simulated protection against SQL Injection and XSS.
+
+<h3 align="center" style="font-size: 2em;">Architecture Diagram</h3>
 
 ![1-Architecture1853](https://github.com/user-attachments/assets/21eeecad-33f2-4796-bbfd-710e4cde1583)
 

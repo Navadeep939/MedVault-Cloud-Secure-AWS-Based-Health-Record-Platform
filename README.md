@@ -78,3 +78,6 @@ Database: PostgreSQL (AWS RDS)
 
 Storage: AWS S3 + KMS
 
+
+          <img width="1705" height="982" alt="Screenshot 2026-01-13 at 8 03 17 AM" src="https://github.com/user-attachments/assets/0008dc86-8501-462f-95de-153b4e8fb568" />
+

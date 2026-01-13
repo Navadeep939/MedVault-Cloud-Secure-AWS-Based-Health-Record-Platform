@@ -47,6 +47,9 @@ Deployment Lab: Simulate Terraform init/apply workflows.
 
 Chaos Engineering: Trigger simulated EC2 failures to test Auto Scaling resilience.
 
+<img width="1687" height="982" alt="Screenshot 2026-01-13 at 8 00 50 AM" src="https://github.com/user-attachments/assets/92e28802-96a3-4ed0-95df-eeadbc272aaf" />
+
+
 <h3 align="center" style="font-size: 2em;">👩‍⚕️ Patient Health Portal</h3>
 
 Secure Access: Role-based authentication (simulated AWS Cognito).
@@ -56,6 +59,9 @@ Health Vitals: Real-time visualization of Heart Rate, BP, and SpO2.
 Encrypted Vault: Upload and store medical records (PDF/Imaging) securely to S3.
 
 MedVault AI Assistant: Context-aware chatbot for interpreting medical data.
+
+<img width="1710" height="987" alt="Screenshot 2026-01-13 at 8 02 19 AM" src="https://github.com/user-attachments/assets/f9a555b8-fca6-408f-8d4f-6e29d5b939c6" />
+
 
 <h2 align="center" style="font-size: 3em;">🛠️ Technology Stack</h2>
 

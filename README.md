@@ -35,3 +35,39 @@ WAF Integration: Simulated protection against SQL Injection and XSS.
 
                        Security-Focused Architecture Diagram
                      
+<h2 align="center" style="font-size: 3em;">✨ Key Features</h2>
+
+<h3 align="center" style="font-size: 2em;">👨‍💻 Admin & Architect Dashboard</h3>
+
+Infrastructure Visualization: Interactive map of AWS components.
+
+SOC Dashboard: Live threat feed (WAF logs) and FinOps cost estimation.
+
+Deployment Lab: Simulate Terraform init/apply workflows.
+
+Chaos Engineering: Trigger simulated EC2 failures to test Auto Scaling resilience.
+
+<h3 align="center" style="font-size: 2em;">👩‍⚕️ Patient Health Portal</h3>
+
+Secure Access: Role-based authentication (simulated AWS Cognito).
+
+Health Vitals: Real-time visualization of Heart Rate, BP, and SpO2.
+
+Encrypted Vault: Upload and store medical records (PDF/Imaging) securely to S3.
+
+MedVault AI Assistant: Context-aware chatbot for interpreting medical data.
+
+<h2 align="center" style="font-size: 3em;">🛠️ Technology Stack</h2>
+
+Backend: Python (Flask), Boto3 (AWS SDK)
+
+Infrastructure: HashiCorp Terraform
+
+Frontend: HTML5, Tailwind CSS, JavaScript (Vanilla)
+
+AI Engine: Google Gemini API (via MedVault AI module)
+
+Database: PostgreSQL (AWS RDS)
+
+Storage: AWS S3 + KMS
+

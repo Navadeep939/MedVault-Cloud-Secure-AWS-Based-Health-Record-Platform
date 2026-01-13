@@ -19,4 +19,4 @@ Data Tier: Amazon RDS (PostgreSQL) & S3 (KMS Encrypted) for records.
 
 
 ![1-Architecture1853](https://github.com/user-attachments/assets/21eeecad-33f2-4796-bbfd-710e4cde1583)
-Security-Focused Architecture Diagram
+                      Security-Focused Architecture Diagram

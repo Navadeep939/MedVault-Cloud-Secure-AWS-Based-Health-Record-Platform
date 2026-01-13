@@ -15,3 +15,8 @@ Data Tier: Amazon RDS (PostgreSQL) & S3 (KMS Encrypted) for records.
 <h3 align="center" style="font-size: 2em;">Architecture Diagram</h3>
 <img width="1024" height="474" alt="3TierArchitecture drawio-3-1024x474" src="https://github.com/user-attachments/assets/a839b8d4-ce57-4792-8708-5a0b06bb06a9" />
                       High-Level Architecture Diagram
+
+
+
+![1-Architecture1853](https://github.com/user-attachments/assets/21eeecad-33f2-4796-bbfd-710e4cde1583)
+Security-Focused Architecture Diagram

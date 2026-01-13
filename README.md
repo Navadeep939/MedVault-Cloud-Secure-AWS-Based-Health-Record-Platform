@@ -83,66 +83,74 @@ tabase: PostgreSQL (AWS RDS)
 <h3 align="center" style="font-size: 2em;">Installation</h3>
 
 Clone the Repository
-
-git clone [https://github.com/yourusername/medvault-cloud.git](https://github.com/yourusername/medvault-cloud.git)
+git clone [https://github.com/yourusername/medvault-cloud.git](https://github.com/Navadeep939/medvault-cloud.git)
 cd medvault-cloud
 
 
 Set Up a Virtual Environment (Recommended)
 
 # macOS/Linux
-python3 -m venv venv
-source venv/bin/activate
+    python3 -m venv venv
+    source venv/bin/activate
 
 # Windows
-python -m venv venv
-.\venv\Scripts\activate
+
+
+    python -m venv venv
+    .\venv\Scripts\activate
 
 
 Install Dependencies
 
-pip install -r requirements.txt
+
+    pip install -r requirements.txt
 
 
 Configure Environment Variables
 
-Create a .env file in the root directory to store secrets securely:
+     Create a .env file in the root directory to store secrets securely:
 
 # Flask Security
-SECRET_KEY=dev-secret-key-change-in-prod
+
+
+     SECRET_KEY=dev-secret-key-change-in-prod
 
 # AWS Configuration (Simulation Context)
-S3_BUCKET_NAME=medvault-patient-records
-KMS_KEY_ID=alias/medvault-key
-AWS_REGION=us-east-1
+
+
+    S3_BUCKET_NAME=medvault-patient-records
+     KMS_KEY_ID=alias/medvault-key
+          AWS_REGION=us-east-1
 
 # AI Integration
-MEDVAULT_AI_KEY=your_google_gemini_api_key
+   
+   
+    MEDVAULT_AI_KEY=API_med_vault_api_key
 
 
 Run the Application
 
-python app.py
+    python app.py
 
 
 Open your browser and navigate to http://localhost:5000.
 
 <h2 align="center" style="font-size: 3em;">📂 Project Structure</h2>
 
-medvault-cloud/
-├── app.py                  # Main Flask Application Entry Point
-├── config.py               # Security & AWS Configuration
-├── requirements.txt        # Python Dependencies
-├── modules/                # Core Logic Modules
-│   ├── ai_chat.py          # AI Chatbot Engine (Gemini Integration)
-│   ├── chaos.py            # Chaos Engineering Simulator
-│   ├── terraform_runner.py # IaC Simulation Logic
-│   ├── networking/         # Terraform VPC Module
-│   ├── compute/            # Terraform EC2 Module
-│   ├── storage/            # Terraform S3 Module
-│   ├── database/           # Terraform RDS Module
-│   └── iam/                # Terraform IAM Policies
-└── templates/              # HTML Frontend Templates
+      medvault-cloud/
+    ├── app.py                  # Main Flask Application Entry Point
+    ├── config.py               # Security & AWS Configuration
+    ├── requirements.txt        # Python Dependencies
+    ├── modules/                # Core Logic Modules
+    │   ├── ai_chat.py          # AI Chatbot Engine (Gemini Integration)
+    │   ├── chaos.py            # Chaos Engineering Simulator
+    │   ├── terraform_runner.py # IaC Simulation Logic
+    │   ├── networking/         # Terraform VPC Module
+    │   ├── compute/            # Terraform EC2 Module
+    │   ├── storage/            # Terraform S3 Module
+    │   ├── database/           # Terraform RDS Module
+    │   └── iam/                # Terraform IAM Policies
+    └── templates/              # HTML Frontend Templates
     └── login.html          # Authentication UI
     └── admin_dashboard.html # Admin Ops Center
     └── patient_portal.html  # Patient Interface
